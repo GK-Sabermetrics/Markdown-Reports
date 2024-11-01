@@ -1,0 +1,238 @@
+---
+output:
+  pdf_document: default
+  html_document:
+    df_print: paged
+classoption: landscape
+params:
+  player: Cole, Lawson
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+# TOP ----
+library(tidyverse)
+library(DT)
+library(scales)
+library(shinythemes)
+library(data.table)
+library(knitr)
+
+data = read.csv("LiveAB_2-21-24 - LiveAB_2-21-24.csv")
+
+Pitcher = filter(data, Pitcher == params$player)
+
+cols = c('Fastball' = '#d22d49', 'TwoSeamFastBall' = '#93afd4', 'ChangeUp' = '#1dbe3a', 
+         'Slider' = '#c3bd0e', 'Curveball' = '#00d1ed', 'Cutter' = '#933f2c', 
+         'Sinker' = '#de6a04', 'Splitter' = '#DDB33A')
+bks = c('Fastball','TwoSeamFastBall','Sinker','Cutter','Splitter','ChangeUp','Curveball','Slider')
+lbs = c('FB','2SFB','SI','CU','SP','CH','CB','SL')
+
+```
+
+```{r Pitcher Table, echo=FALSE, message=FALSE, warning=FALSE}
+PitcherTable = Pitcher %>%
+      group_by('Pitch' = TaggedPitchType) %>%
+      summarise('Total' = n(),
+                'Usage' = percent(n()/length(.$TaggedPitchType)),
+                'Max' = floor(max(RelSpeed, na.rm = TRUE)),
+                'Avg' = floor(mean(RelSpeed, na.rm = TRUE)),
+                'Spin' = floor(mean(SpinRate, na.rm = TRUE)),
+                'Tilt' = Tilt %>% as.POSIXct(format = '%H:%M', tz = 'UTC') %>%
+                  as.numeric() %>% mean() %>%
+                  as.POSIXct(origin = '1970-01-01', tz = 'UTC') %>%
+                  format(format = "%k:%M", tz = 'UTC'),
+                'HB' = round(mean(HorzBreak, na.rm = TRUE), 2),
+                'IVB' = round(mean(InducedVertBreak, na.rm = TRUE), 2),
+                #'Strikes' = length(which(PitchCall == "StrikeCalled")),
+                #'Strike' = percent(length(which(PitchCall == "StrikeCalled"))/n()),
+                #'Whiff' = length(which(PitchCall == "StrikeSwinging")),
+                #'Whiff' = percent(length(which(PitchCall == "StrikeSwinging"))/n()),
+                #'LHB' = length(which(BatterSide == "Left")),
+                'LHB' = percent(length(which(BatterSide == "Left"))/n()),
+                #'RHB' = length(which(BatterSide == "Right")),
+                'RHB' = percent(length(which(BatterSide == "Right"))/n()),
+                #'FP' = length(which(Balls == 0 & Strikes == 0)),
+                #'PC' = length(which(Strikes == 2 & Balls != 3))
+      )
+```
+
+```{r BIP Plot, echo=F, warning=F}
+
+BIPPlot =
+Pitcher %>% filter(PitchCall == "InPlay") %>% 
+ggplot(aes(x = PlateLocSide, y = PlateLocHeight, color = TaggedPitchType),) +
+  xlim(-3,3) + ylim(0,5) + labs(color = "", title = "Balls In Play") +
+  geom_rect(aes(xmin = -0.83, xmax = 0.83, ymin = 1.5, ymax = 3.5), alpha = 0, size = 1, color = "black") +
+  geom_segment(aes(x = -0.708, y = 0.15, xend = 0.708, yend = 0.15), size = 1, color = "black") + 
+  geom_segment(aes(x = -0.708, y = 0.3, xend = -0.708, yend = 0.15), size = 1, color = "black") + 
+  geom_segment(aes(x = -0.708, y = 0.3, xend = 0, yend = 0.5), size = 1, color = "black") + 
+  geom_segment(aes(x = 0, y = 0.5, xend = 0.708, yend = 0.3), size = 1, color = "black") + 
+  geom_segment(aes(x = 0.708, y = 0.3, xend = 0.708, yend = 0.15), size = 1, color = "black") +
+  geom_segment(aes(x = -0.83, y = 2.167, xend = 0.83, yend = 2.167), linetype = 2, color = 'dark grey', size = 1) +
+  geom_segment(aes(x = -0.83, y = 2.833, xend = 0.83, yend = 2.833), linetype = 2, color = 'dark grey', size = 1) +
+  geom_segment(aes(x = -0.277, y = 1.5, xend = -0.277, yend = 3.5), linetype = 2, color = 'dark grey', size = 1) +
+  geom_segment(aes(x = 0.276, y = 1.5, xend = 0.276, yend = 3.5), linetype = 2, color = 'dark grey', size = 1) +
+  geom_point(size = 6, na.rm = TRUE) +
+  scale_color_manual(values = cols, breaks = bks, labels = lbs) +
+  geom_text(aes(label=PitchNo, x=PlateLocSide,y=PlateLocHeight), size=3, color='white') +
+  theme_bw() + theme(plot.title = element_text(size = 16, face = "bold", hjust = 0.5)) +
+  theme(legend.position = 'bottom', legend.text = element_text(size = 8), axis.title = element_blank()) +
+  theme(axis.ticks = element_blank(), axis.text = element_blank()) +
+  guides(color = guide_legend(override.aes = list(size=4)))
+```
+
+```{r LHB Plot, echo=F, warning=F, }
+LHBPlot =
+  Pitcher %>% filter(BatterSide == "Left") %>% 
+ggplot(aes(x = PlateLocSide, y = PlateLocHeight, color = TaggedPitchType)) +
+  xlim(-3,3) + ylim(0,5) + 
+  labs(color = "", title = "vs LHB") +
+  geom_rect(aes(xmin = -0.83, xmax = 0.83, ymin = 1.5, ymax = 3.5), alpha = 0, linewidth = 1, color = "black") +
+  geom_segment(aes(x = -0.708, y = 0.15, xend = 0.708, yend = 0.15), linewidth = 1, color = "black") + 
+  geom_segment(aes(x = -0.708, y = 0.3, xend = -0.708, yend = 0.15), linewidth = 1, color = "black") + 
+  geom_segment(aes(x = -0.708, y = 0.3, xend = 0, yend = 0.5), linewidth = 1, color = "black") + 
+  geom_segment(aes(x = 0, y = 0.5, xend = 0.708, yend = 0.3), linewidth = 1, color = "black") + 
+  geom_segment(aes(x = 0.708, y = 0.3, xend = 0.708, yend = 0.15), linewidth = 1, color = "black") +
+  geom_segment(aes(x = -0.83, y = 2.167, xend = 0.83, yend = 2.167), linetype = 2, color = 'dark grey', linewidth = 1) +
+  geom_segment(aes(x = -0.83, y = 2.833, xend = 0.83, yend = 2.833), linetype = 2, color = 'dark grey', linewidth = 1) +
+  geom_segment(aes(x = -0.277, y = 1.5, xend = -0.277, yend = 3.5), linetype = 2, color = 'dark grey', linewidth = 1) +
+  geom_segment(aes(x = 0.276, y = 1.5, xend = 0.276, yend = 3.5), linetype = 2, color = 'dark grey', linewidth = 1) +
+  geom_point(size = 5, na.rm = TRUE) +
+  scale_color_manual(values = cols, breaks = bks, labels = lbs) +
+  #annotate('text', x = 0, y = 5, label = "vs LHB", size = 5) +
+  theme_bw() + theme(plot.title = element_text(size = 16, face = "bold", hjust = 0.5)) +
+  theme(legend.position = 'bottom', legend.text = element_text(size = 10), axis.title = element_blank()) +
+  theme(axis.ticks = element_blank(), axis.text = element_blank(), legend.background = element_blank(), 
+        legend.key = element_blank()) +
+  guides(color = guide_legend(override.aes = list(size=4)))
+```
+
+```{r RHB Plot, echo=F, warning=F, }
+RHBPlot =
+  Pitcher %>% filter(BatterSide == "Right") %>% 
+ggplot(aes(x = PlateLocSide, y = PlateLocHeight, color = TaggedPitchType)) +
+  xlim(-3,3) + ylim(0,5) + 
+  labs(color = "", title = "vs RHB") +
+  geom_rect(aes(xmin = -0.83, xmax = 0.83, ymin = 1.5, ymax = 3.5), alpha = 0, linewidth = 1, color = "black") +
+  geom_segment(aes(x = -0.708, y = 0.15, xend = 0.708, yend = 0.15), linewidth = 1, color = "black") + 
+  geom_segment(aes(x = -0.708, y = 0.3, xend = -0.708, yend = 0.15), linewidth = 1, color = "black") + 
+  geom_segment(aes(x = -0.708, y = 0.3, xend = 0, yend = 0.5), linewidth = 1, color = "black") + 
+  geom_segment(aes(x = 0, y = 0.5, xend = 0.708, yend = 0.3), linewidth = 1, color = "black") + 
+  geom_segment(aes(x = 0.708, y = 0.3, xend = 0.708, yend = 0.15), linewidth = 1, color = "black") +
+  geom_segment(aes(x = -0.83, y = 2.167, xend = 0.83, yend = 2.167), linetype = 2, color = 'dark grey', linewidth = 1) +
+  geom_segment(aes(x = -0.83, y = 2.833, xend = 0.83, yend = 2.833), linetype = 2, color = 'dark grey', linewidth = 1) +
+  geom_segment(aes(x = -0.277, y = 1.5, xend = -0.277, yend = 3.5), linetype = 2, color = 'dark grey', linewidth = 1) +
+  geom_segment(aes(x = 0.276, y = 1.5, xend = 0.276, yend = 3.5), linetype = 2, color = 'dark grey', linewidth = 1) +
+  geom_point(size = 5, na.rm = TRUE) +
+  scale_color_manual(values = cols, breaks = bks, labels = lbs) +
+  #annotate('text', x = 0, y = 5, label = "vs RHB", size = 5) +
+  theme_bw() + theme(plot.title = element_text(size = 16, face = "bold", hjust = 0.5)) +
+  theme(legend.position = 'bottom', legend.text = element_text(size = 10), axis.title = element_blank()) +
+  theme(axis.ticks = element_blank(), axis.text = element_blank(), legend.background = element_blank(), 
+        legend.key = element_blank()) +
+  guides(color = guide_legend(override.aes = list(size=4)))
+```
+
+
+```{r Movement, echo=F, warning=F}
+Mov =
+ggplot(Pitcher, aes(x=HorzBreak,y=InducedVertBreak, color=TaggedPitchType)) +
+  labs(x = "Horizontal Movement (in)", y = "Vertical Movement (in)", color = " ", title = "Pitch Movement") + 
+  xlim(-28, 28) + ylim(-28, 28) +
+  geom_segment(aes(x = 0, y = -28, xend = 0, yend = 28), size = 1, color = "grey55") + 
+  geom_segment(aes(x = -28, y = 0, xend = 28, yend = 0), size = 1, color = "grey55") +
+  geom_point(size = 4, na.rm = TRUE) +
+  scale_color_manual(values = cols, breaks = bks, labels = lbs) +
+  theme_bw() + theme(plot.title = element_text(size = 16, face = "bold", hjust = 0.5)) +
+  theme(legend.position = "bottom", legend.text = element_text(size = 10), axis.title = element_text(size = 14),
+        legend.background = element_blank(), legend.key = element_blank()) +
+  guides(color = guide_legend(override.aes = list(size=4)))
+```
+
+```{r Release, echo=F, warning=F, message=F}
+Rel = 
+ggplot(Pitcher, aes(x = RelSide,y = RelHeight, color = TaggedPitchType)) +
+  labs(x = "Release Side (ft)", y = "Release Height (ft)", color = " ", title = "Release Points") + 
+  xlim(-5, 5) + ylim(3, 7) +
+  geom_segment(aes(x = 0, y = 3, xend = 0, yend = 7), size = 1, color = "grey55") + 
+  geom_segment(aes(x = -5, y = 5, xend = 5, yend = 5), size = 1, color = "grey55") +
+  geom_point(size = 3, na.rm = TRUE) +
+  scale_color_manual(values = cols, breaks = bks, labels = lbs) +
+  theme_bw() + theme(plot.title = element_text(size = 16, face = "bold", hjust = 0.5)) +
+  theme(legend.position = 'bottom', legend.text = element_text(size = 10), axis.title = element_text(size = 14)) +
+  theme(legend.background = element_blank(), legend.key = element_blank()) +
+  guides(color = guide_legend(override.aes = list(size=4)))
+```
+
+```{r ESV, echo=F, warning=F, message=F}
+ESV = 
+  ggplot(Pitcher, aes(x = Extension*12, y = RelHeight*12, color = TaggedPitchType)) +
+  labs(x = "Extension (in)", y = "Release Height (in)", color = " ", title = "Extension Side View") +
+  scale_color_manual(values = cols, breaks = bks, labels = lbs) +
+  geom_point(size=3) +
+  coord_cartesian(xlim = c(0,85), ylim = c(0,80)) +
+  geom_segment(aes(x = 0, y = 0, xend = 48, yend = 0), size = 2, color = 'black') +
+  geom_curve(aes(x = 48, y = 0, xend = 85, yend = -4), size = 2, curvature = -.05, color = 'black') +
+  theme_bw() + theme(plot.title = element_text(size = 16, face = "bold", hjust = 0.5)) +
+  theme(legend.position = 'bottom', legend.text = element_text(size = 10), axis.title = element_text(size = 14)) +
+  theme(legend.background = element_blank(), legend.key = element_blank()) +
+  guides(color = guide_legend(override.aes = list(size=4)))
+```
+
+```{r ETV, echo=F, message=FALSE, warning=FALSE}
+ETV = 
+  ggplot(Pitcher, aes(x = Extension*12, y = RelSide*12, color = TaggedPitchType)) +
+  labs(x = "Extension (in)", y = "Release Side (in)", color = " ", title = "Extension Top View") +
+  geom_point(size = 3) +
+  scale_color_manual(values = cols, breaks = bks, labels = lbs, drop = FALSE) +
+  coord_cartesian(xlim = c(0,96), ylim = c(-55,55)) +
+  geom_segment(aes(x = -6, y = 10, xend = 0, yend = 10), color = 'black', size = 1) +
+  geom_segment(aes(x = -6, y = -10, xend = 0, yend = -10), color = 'black', size = 1) +
+  geom_segment(aes(x = 0, y = -10, xend = 0, yend = 10), color = 'black', size = 1) +
+  theme_bw() + 
+  theme(
+        plot.title = element_text(size = 16, face = "bold", hjust = 0.5),
+        legend.position = "bottom",
+        legend.text = element_text(size = 10),
+        axis.title = element_text(size = 14)
+        ) +
+  guides(color = guide_legend(override.aes = list(size=4)))
+```
+
+
+```{r, echo=F, results = "asis"}
+cat("# 2/21/24 vs. LiveAB",params$player)
+```
+
+```{r echo=FALSE}
+kable(PitcherTable)
+
+```
+
+```{r echo=F, fig.width=5, fig.height=5, fig.align='center'}
+BIPPlot
+
+```
+
+```{r, echo=F}
+Pitcher %>% 
+  filter(PitchCall == "InPlay") %>% select(., PitchNo, TaggedPitchType, TaggedHitType, PlayResult, ExitSpeed, Angle, Distance) %>% 
+  kable()
+```
+
+```{r, echo=FALSE, fig.show="hold", out.width="50%", fig.height=6, warning=F}
+LHBPlot
+RHBPlot
+```
+
+```{r, echo=FALSE, fig.show="hold", out.width="50%", fig.height=6, warning=F}
+Mov
+Rel
+```
+
+```{r, echo=FALSE, fig.show="hold", out.width="50%", fig.height=6, warning=F}
+ESV
+ETV
+```
+

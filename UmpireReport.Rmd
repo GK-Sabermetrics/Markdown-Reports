@@ -1,0 +1,307 @@
+---
+title: "Umpire Report Fall WS G1"
+date: "10/30/24"
+output:
+  pdf_document: default
+  html_document:
+    df_print: paged
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(DT)
+library(scales)
+library(shinythemes)
+library(googlesheets4)
+library(data.table)
+library(knitr)
+
+data = read_sheet("https://docs.google.com/spreadsheets/d/18SSYBNx05iar87fyvQiD9GZI_MyWB4Uf0eo1Mr48mLo/edit?gid=2132915055#gid=2132915055")
+
+UmpOverall =
+data %>% filter(PitchCall %in% c("BallCalled", "StrikeCalled")) %>% 
+  ggplot(aes(x=PlateLocSide, y = PlateLocHeight, color = PitchCall)) +
+  ylim(0,5) +
+  scale_x_continuous(breaks = c(-3,-2.5,-2,-1.5,-1,-0.5,0,0.5,1,1.5,2,2.5,3),limits = c(-3,3)) +
+  labs(color = "", title = "Overall") +
+  geom_rect(aes(xmin = -0.708, xmax = 0.708, ymin = 1.5, ymax = 3.5), alpha = 0, linewidth = 1, color = "black") +
+  geom_segment(aes(x = -0.708, y = 0.15, xend = 0.708, yend = 0.15), 
+               linewidth = 1, color = "black") + 
+  geom_segment(aes(x = -0.708, y = 0.3, xend = -0.708, yend = 0.15), 
+               linewidth = 1, color = "black") + 
+  geom_segment(aes(x = -0.708, y = 0.3, xend = 0, yend = 0.5), 
+               linewidth = 1, color = "black") + 
+  geom_segment(aes(x = 0, y = 0.5, xend = 0.708, yend = 0.3), 
+               linewidth = 1, color = "black") + 
+  geom_segment(aes(x = 0.708, y = 0.3, xend = 0.708, yend = 0.15), 
+               linewidth = 1, color = "black") +
+  geom_segment(aes(x = -0.708, y = 2.167, xend = 0.708, yend = 2.167), 
+               linetype = 2, color = 'dark grey', linewidth = 1) +
+  geom_segment(aes(x = -0.708, y = 2.833, xend = 0.708, yend = 2.833), 
+               linetype = 2, color = 'dark grey', linewidth = 1) +
+  geom_segment(aes(x = -0.277, y = 1.5, xend = -0.277, yend = 3.5), 
+               linetype = 2, color = 'dark grey', linewidth = 1) +
+  geom_segment(aes(x = 0.276, y = 1.5, xend = 0.276, yend = 3.5), 
+               linetype = 2, color = 'dark grey', linewidth = 1) +
+  geom_rect(aes(xmin = -3, xmax = -1.2, ymin = 0, ymax = 0.5), linewidth = 1, color = "black") +
+  geom_rect(aes(xmin = 1.2, xmax = 3, ymin = 0, ymax = 0.5), linewidth = 1, color = "black") +
+  geom_point(size = 2.86) +
+  scale_color_manual(values = list("StrikeCalled" = "red3", "BallCalled" = "blue3")) +
+  theme_bw() + theme(plot.title = element_text(size = 16, face = "bold", hjust = 0.5)) +
+  theme(legend.position = 'bottom', legend.text = element_text(size = 10), axis.title = element_blank()) +
+  theme(axis.ticks = element_blank(), legend.background = element_blank(), 
+        legend.key = element_blank()) +
+  guides(color = guide_legend(override.aes = list(size=4)))
+
+UmpStrike =
+data %>% filter(PitchCall %in% c("StrikeCalled")) %>% 
+ggplot(aes(x=PlateLocSide, y = PlateLocHeight, color = PitchCall)) +
+  ylim(0,5) +
+  scale_x_continuous(breaks = c(-3,-2.5,-2,-1.5,-1,-0.5,0,0.5,1,1.5,2,2.5,3),limits = c(-3,3)) +
+  labs(color = "", title = "Strikes") +
+  geom_rect(aes(xmin = -0.708, xmax = 0.708, ymin = 1.5, ymax = 3.5), alpha = 0, linewidth = 1, color = "black") +
+  geom_segment(aes(x = -0.708, y = 0.15, xend = 0.708, yend = 0.15), 
+               linewidth = 1, color = "black") + 
+  geom_segment(aes(x = -0.708, y = 0.3, xend = -0.708, yend = 0.15), 
+               linewidth = 1, color = "black") + 
+  geom_segment(aes(x = -0.708, y = 0.3, xend = 0, yend = 0.5), 
+               linewidth = 1, color = "black") + 
+  geom_segment(aes(x = 0, y = 0.5, xend = 0.708, yend = 0.3), 
+               linewidth = 1, color = "black") + 
+  geom_segment(aes(x = 0.708, y = 0.3, xend = 0.708, yend = 0.15), 
+               linewidth = 1, color = "black") +
+  geom_segment(aes(x = -0.708, y = 2.167, xend = 0.708, yend = 2.167), 
+               linetype = 2, color = 'dark grey', linewidth = 1) +
+  geom_segment(aes(x = -0.708, y = 2.833, xend = 0.708, yend = 2.833), 
+               linetype = 2, color = 'dark grey', linewidth = 1) +
+  geom_segment(aes(x = -0.277, y = 1.5, xend = -0.277, yend = 3.5), 
+               linetype = 2, color = 'dark grey', linewidth = 1) +
+  geom_segment(aes(x = 0.276, y = 1.5, xend = 0.276, yend = 3.5), 
+               linetype = 2, color = 'dark grey', linewidth = 1) +
+  geom_rect(aes(xmin = -3, xmax = -1.2, ymin = 0, ymax = 0.5), linewidth = 1, color = "black") +
+  geom_rect(aes(xmin = 1.2, xmax = 3, ymin = 0, ymax = 0.5), linewidth = 1, color = "black") +
+  geom_point(size = 2.86) +
+  scale_color_manual(values = list("StrikeCalled" = "red3", "BallCalled" = "blue3")) +
+  theme_bw() + theme(plot.title = element_text(size = 16, face = "bold", hjust = 0.5)) +
+  theme(legend.position = 'bottom', legend.text = element_text(size = 10), axis.title = element_blank()) +
+  theme(axis.ticks = element_blank(), legend.background = element_blank(), 
+        legend.key = element_blank()) +
+  guides(color = guide_legend(override.aes = list(size=4)))
+
+UmpBall =
+data %>% filter(PitchCall %in% c("BallCalled")) %>% 
+ggplot(aes(x=PlateLocSide, y = PlateLocHeight, color = PitchCall)) +
+  ylim(0,5) +
+  scale_x_continuous(breaks = c(-3,-2.5,-2,-1.5,-1,-0.5,0,0.5,1,1.5,2,2.5,3),limits = c(-3,3)) +
+  labs(color = "", title = "Balls") +
+  geom_rect(aes(xmin = -0.708, xmax = 0.708, ymin = 1.5, ymax = 3.5), alpha = 0, linewidth = 1, color = "black") +
+  geom_segment(aes(x = -0.708, y = 0.15, xend = 0.708, yend = 0.15), 
+               linewidth = 1, color = "black") + 
+  geom_segment(aes(x = -0.708, y = 0.3, xend = -0.708, yend = 0.15), 
+               linewidth = 1, color = "black") + 
+  geom_segment(aes(x = -0.708, y = 0.3, xend = 0, yend = 0.5), 
+               linewidth = 1, color = "black") + 
+  geom_segment(aes(x = 0, y = 0.5, xend = 0.708, yend = 0.3), 
+               linewidth = 1, color = "black") + 
+  geom_segment(aes(x = 0.708, y = 0.3, xend = 0.708, yend = 0.15), 
+               linewidth = 1, color = "black") +
+  geom_segment(aes(x = -0.708, y = 2.167, xend = 0.708, yend = 2.167), 
+               linetype = 2, color = 'dark grey', linewidth = 1) +
+  geom_segment(aes(x = -0.708, y = 2.833, xend = 0.708, yend = 2.833), 
+               linetype = 2, color = 'dark grey', linewidth = 1) +
+  geom_segment(aes(x = -0.277, y = 1.5, xend = -0.277, yend = 3.5), 
+               linetype = 2, color = 'dark grey', linewidth = 1) +
+  geom_segment(aes(x = 0.276, y = 1.5, xend = 0.276, yend = 3.5), 
+               linetype = 2, color = 'dark grey', linewidth = 1) +
+  geom_rect(aes(xmin = -3, xmax = -1.2, ymin = 0, ymax = 0.5), linewidth = 1, color = "black") +
+  geom_rect(aes(xmin = 1.2, xmax = 3, ymin = 0, ymax = 0.5), linewidth = 1, color = "black") +
+  geom_point(size = 2.86) +
+  scale_color_manual(values = list("StrikeCalled" = "red3", "BallCalled" = "blue3")) +
+  theme_bw() + theme(plot.title = element_text(size = 16, face = "bold", hjust = 0.5)) +
+  theme(legend.position = 'bottom', legend.text = element_text(size = 10), axis.title = element_blank()) +
+  theme(axis.ticks = element_blank(), legend.background = element_blank(), 
+        legend.key = element_blank()) +
+  guides(color = guide_legend(override.aes = list(size=4)))
+
+Missed_Strikes = 
+length(which(data$PlateLocSide < 0.8 & data$PlateLocSide > -0.8 
+             & data$PlateLocHeight > 1.4 & data$PlateLocHeight < 3.6 & data$PitchCall == 'BallCalled'))
+
+Missed_Balls =
+length(which(data$PitchCall == "StrikeCalled" & data$PlateLocSide > 0.8 | 
+               data$PitchCall == "StrikeCalled" & data$PlateLocSide < -0.8 | 
+               data$PitchCall == "StrikeCalled" & data$PlateLocHeight < 1.4 | 
+               data$PitchCall == "StrikeCalled" & data$PlateLocHeight > 3.6))
+
+Balls = length(which(data$PitchCall == "BallCalled"))
+
+Strikes = length(which(data$PitchCall == "StrikeCalled"))
+
+Total = length(which(data$PitchCall %in% c("BallCalled", "StrikeCalled")))
+
+Accuracy = (((Total - (Missed_Balls+Missed_Strikes)) / Total)) %>% percent()
+
+
+
+MS = data %>% filter(PlateLocSide < 0.8 & PlateLocSide > -0.8 
+                     & PlateLocHeight > 1.4 & PlateLocHeight < 3.6 & PitchCall == 'BallCalled') %>% 
+  mutate('Likely' = 'Strike')
+
+MB = data %>% filter(PitchCall == "StrikeCalled" & PlateLocSide > 0.8 | 
+                       PitchCall == "StrikeCalled" & PlateLocSide < -0.8 | 
+                       PitchCall == "StrikeCalled" & PlateLocHeight < 1.4 | 
+                       PitchCall == "StrikeCalled" & PlateLocHeight > 3.6) %>% 
+  mutate('Likely' = 'Ball')
+
+
+Sdata = rbind(MB,MS)
+
+ZonePlot = 
+Sdata %>% 
+  ggplot(aes(x = PlateLocSide, y = PlateLocHeight, color = PitchCall)) +
+  ylim(0,5) +
+  scale_x_continuous(breaks = c(-3,-2.5,-2,-1.5,-1,-0.5,0,0.5,1,1.5,2,2.5,3),limits = c(-3,3)) +
+  labs(color = "", title = "Missed Call Situations") +
+  geom_rect(aes(xmin = -0.708, xmax = 0.708, ymin = 1.5, ymax = 3.5), alpha = 0, linewidth = 1, color = "black") +
+  geom_segment(aes(x = -0.708, y = 0.15, xend = 0.708, yend = 0.15), 
+               linewidth = 1, color = "black") + 
+  geom_segment(aes(x = -0.708, y = 0.3, xend = -0.708, yend = 0.15), 
+               linewidth = 1, color = "black") + 
+  geom_segment(aes(x = -0.708, y = 0.3, xend = 0, yend = 0.5), 
+               linewidth = 1, color = "black") + 
+  geom_segment(aes(x = 0, y = 0.5, xend = 0.708, yend = 0.3), 
+               linewidth = 1, color = "black") + 
+  geom_segment(aes(x = 0.708, y = 0.3, xend = 0.708, yend = 0.15), 
+               linewidth = 1, color = "black") +
+  geom_segment(aes(x = -0.708, y = 2.167, xend = 0.708, yend = 2.167), 
+               linetype = 2, color = 'dark grey', linewidth = 1) +
+  geom_segment(aes(x = -0.708, y = 2.833, xend = 0.708, yend = 2.833), 
+               linetype = 2, color = 'dark grey', linewidth = 1) +
+  geom_segment(aes(x = -0.277, y = 1.5, xend = -0.277, yend = 3.5), 
+               linetype = 2, color = 'dark grey', linewidth = 1) +
+  geom_segment(aes(x = 0.276, y = 1.5, xend = 0.276, yend = 3.5), 
+               linetype = 2, color = 'dark grey', linewidth = 1) +
+  geom_segment(aes(x = 0.8, y = 1.4, xend = 0.8, yend = 3.6), color = 'black') +
+  geom_segment(aes(x = -0.8, y = 1.4, xend = -0.8, yend = 3.6), color = 'black') +
+  geom_segment(aes(x = 0.8, y = 1.4, xend = -0.8, yend = 1.4), color = 'black') +
+  geom_segment(aes(x = -0.8, y = 3.6, xend = 0.8, yend = 3.6), color = 'black') +
+  geom_rect(aes(xmin = -3, xmax = -1.2, ymin = 0, ymax = 0.5), linewidth = 1, color = "black") +
+  geom_rect(aes(xmin = 1.2, xmax = 3, ymin = 0, ymax = 0.5), linewidth = 1, color = "black") +
+  geom_point(size = 5.3) +
+  geom_text(aes(x = PlateLocSide, y = PlateLocHeight, label = PitchNo), color = 'white', size = 2.5) +
+  scale_color_manual(values = list("StrikeCalled" = "red3", "BallCalled" = "blue3")) +
+  theme_bw() + theme(plot.title = element_text(size = 16, face = "bold", hjust = 0.5)) +
+  theme(legend.position = 'bottom', legend.text = element_text(size = 10), axis.title = element_blank()) +
+  theme(axis.ticks = element_blank(), legend.background = element_blank(), 
+        legend.key = element_blank()) +
+  guides(color = guide_legend(override.aes = list(size=4)))
+
+
+SdataA = 
+Sdata %>% 
+  select(PitchNo, BatterTeam, Pitcher, Batter, Inning, Balls, Strikes, Outs, PitchCall, KorBB, Likely, 
+         PlateLocSide, PlateLocHeight) %>% 
+  rename("Outcome" = 'KorBB') %>% 
+  mutate(Outcome = case_match(Outcome, 'Undefined' ~ "", 'Strikeout' ~ "K", 'Walk' ~ 'BB')) %>% 
+  mutate(Count = paste(Balls,Strikes, sep = "-"), .after = Inning, .keep = "unused") %>% 
+  mutate(PitchCall = case_match(PitchCall, 'StrikeCalled' ~ 'Strike', 'BallCalled' ~ 'Ball')) %>% 
+  mutate(
+    PlateSide = round(PlateLocSide*12, 1),
+    PlateHeight = round(PlateLocHeight*12, 1),
+    HDFZ = ifelse(abs(PlateSide) > 8.49, abs(PlateSide) - 8.49, NA) %>% round(1),
+    VDFZ = ifelse(PlateHeight > 30, PlateHeight - 42, PlateHeight - 18) %>% abs() %>% round(1),
+    VDFZ = ifelse(abs(PlateSide) > 8.49, NA, VDFZ)
+    ) %>% 
+  mutate(HVDFZ = paste(HDFZ,VDFZ, sep = '|'))
+
+run_values = data.frame(
+Count = c('3-0','3-1','2-0','3-2','1-0','2-1','0-0','1-1','2-2','0-1','1-2','0-2'),
+strike_rv = c(-0.117,-0.066,-0.062,-0.294,-0.035,-0.069,-0.037,-0.054,-0.209,-0.051,-0.171,-0.150),
+ball_rv = c(0.051,0.168,0.143,0.234,0.088,0.064,0.032,0.048,0.085,0.024,0.038,0.021)
+)
+
+SdataB = 
+merge(SdataA, run_values, by = 'Count', all.x = TRUE) %>% 
+  mutate(RV = ifelse(PitchCall == "Ball", ball_rv, strike_rv))
+
+SdataC =
+  select(SdataB, PitchNo, Inning, Pitcher, Batter, Count, Outs, PitchCall, Outcome, Likely, RV) %>% 
+  .[order(.$PitchNo),]
+
+MU_ERV = sum(SdataB$RV[SdataB$BatterTeam == "MER_BEA"])
+
+OPP_ERV = sum(SdataB$RV[SdataB$BatterTeam == "CIT_BUL"])
+
+FAVOR = if (MU_ERV > OPP_ERV) 'MERCER' else 'OPPONENT'
+
+Table = data.frame(Balls, Strikes, Missed_Balls, Missed_Strikes, Accuracy, MU_ERV, OPP_ERV, FAVOR) %>% 
+  mutate('Missed Balls' = Missed_Balls,
+         'Missed Strikes' = Missed_Strikes,
+         'MU ERV' = MU_ERV,
+         'OPP ERV' = OPP_ERV,
+         .keep = 'unused') %>% .[, c(1,2,5,6,3,7,8,4)]
+
+DistPlot = 
+SdataA %>% 
+  ggplot(aes(x = PlateLocSide, y = PlateLocHeight, color = PitchCall)) +
+  ylim(0,5) +
+  scale_x_continuous(breaks = c(-3,-2.5,-2,-1.5,-1,-0.5,0,0.5,1,1.5,2,2.5,3),limits = c(-3,3)) +
+  labs(color = "", title = "Pitch Distance From Strike Zone") +
+  labs(x = "Horizontal Inches", y = "Verticle Inches") +
+  geom_rect(aes(xmin = -0.708, xmax = 0.708, ymin = 1.5, ymax = 3.5), alpha = 0, linewidth = 1, color = "black") +
+  geom_segment(aes(x = -0.708, y = 0.15, xend = 0.708, yend = 0.15), 
+               linewidth = 1, color = "black") + 
+  geom_segment(aes(x = -0.708, y = 0.3, xend = -0.708, yend = 0.15), 
+               linewidth = 1, color = "black") + 
+  geom_segment(aes(x = -0.708, y = 0.3, xend = 0, yend = 0.5), 
+               linewidth = 1, color = "black") + 
+  geom_segment(aes(x = 0, y = 0.5, xend = 0.708, yend = 0.3), 
+               linewidth = 1, color = "black") + 
+  geom_segment(aes(x = 0.708, y = 0.3, xend = 0.708, yend = 0.15), 
+               linewidth = 1, color = "black") +
+  geom_segment(aes(x = -0.708, y = 2.167, xend = 0.708, yend = 2.167), 
+               linetype = 2, color = 'dark grey', linewidth = 1) +
+  geom_segment(aes(x = -0.708, y = 2.833, xend = 0.708, yend = 2.833), 
+               linetype = 2, color = 'dark grey', linewidth = 1) +
+  geom_segment(aes(x = -0.277, y = 1.5, xend = -0.277, yend = 3.5), 
+               linetype = 2, color = 'dark grey', linewidth = 1) +
+  geom_segment(aes(x = 0.276, y = 1.5, xend = 0.276, yend = 3.5), 
+               linetype = 2, color = 'dark grey', linewidth = 1) +
+  geom_segment(aes(x = 0.8, y = 1.4, xend = 0.8, yend = 3.6), color = 'black') +
+  geom_segment(aes(x = -0.8, y = 1.4, xend = -0.8, yend = 3.6), color = 'black') +
+  geom_segment(aes(x = 0.8, y = 1.4, xend = -0.8, yend = 1.4), color = 'black') +
+  geom_segment(aes(x = -0.8, y = 3.6, xend = 0.8, yend = 3.6), color = 'black') +
+  geom_rect(aes(xmin = -3, xmax = -1.2, ymin = 0, ymax = 0.5), linewidth = 1, color = "black") +
+  geom_rect(aes(xmin = 1.2, xmax = 3, ymin = 0, ymax = 0.5), linewidth = 1, color = "black") +
+  geom_point(size = 5.3) +
+  geom_text(aes(x = PlateLocSide, y = PlateLocHeight, label = HDFZ), color = 'white', size = 2.5) +
+  geom_text(aes(x = PlateLocSide, y = PlateLocHeight, label = VDFZ), color = 'white', size = 2.5) +
+  scale_color_manual(values = list("Strike" = "red3", "Ball" = "blue3")) +
+  theme_bw() + theme(plot.title = element_text(size = 16, face = "bold", hjust = 0.5)) +
+  theme(legend.position = 'bottom', legend.text = element_text(size = 10)) +
+  theme(axis.ticks = element_blank(), legend.background = element_blank(), 
+        legend.key = element_blank(), axis.text = element_blank()) +
+  guides(color = guide_legend(override.aes = list(size=4)))
+
+```
+
+This report is based on a standardized strikezone and does not take into account the height of players.
+ ```{r echo=F, warning=FALSE, fig.align='center'}
+
+
+kable(Table, format = "simple", align = 'c')
+
+UmpOverall
+
+UmpBall
+
+UmpStrike
+
+ZonePlot
+
+kable(SdataC, format = "simple", align = 'c', row.names = FALSE)
+
+DistPlot
+```
+
